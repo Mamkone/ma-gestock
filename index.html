@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Stock Simple</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Mon Stock</h1>
+
+        <form id="productForm" class="product-form">
+            <input type="text" id="designation" placeholder="Désignation du produit" required>
+            <input type="number" id="quantity" placeholder="Quantité" min="0" value="1" required>
+            <button type="submit">Ajouter Produit</button>
+        </form>
+
+        <div class="product-list-container">
+            <ul id="productList" class="product-list">
+                </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
