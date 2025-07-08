@@ -21,7 +21,53 @@
                 </ul>
         </div>
     </div>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Stock Simple</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script type="module">
+      // Import des fonctions nécessaires du SDK Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+      import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
+      // Votre configuration Firebase (celle que vous m'avez envoyée)
+      const firebaseConfig = {
+        apiKey: "AIzaSyBd7_E3cPprFPVkC6_CCpwt57tDghU4y2E",
+        authDomain: "magestock-for-team.firebaseapp.com",
+        projectId: "magestock-for-team",
+        storageBucket: "magestock-for-team.firebasestorage.app",
+        messagingSenderId: "109154510782",
+        appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
+      };
+
+      // Initialisation de Firebase
+      const app = initializeApp(firebaseConfig);
+
+      // Initialisation de Firestore (la base de données)
+      const db = getFirestore(app);
+
+      // Rendre les variables Firebase disponibles pour script.js
+      // C'est nécessaire car script.js n'est pas un "module" pour l'instant
+      window.db = db;
+      window.collection = collection;
+      window.addDoc = addDoc;
+      window.getDocs = getDocs;
+      window.doc = doc;
+      window.updateDoc = updateDoc;
+      window.deleteDoc = deleteDoc;
+      window.query = query;
+      window.where = where;
+      window.onSnapshot = onSnapshot;
+      window.orderBy = orderBy;
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
     <script src="script.js"></script>
 </body>
 </html>
