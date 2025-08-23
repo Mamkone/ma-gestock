@@ -1,32 +1,32 @@
 // **** NOUVEAU CONTENU COMPLET ET CORRECT DE SCRIPT.JS ****
 
-// Import des fonctions nécessaires du SDK Firebase (spécifiques à ce module)
+// Import des fonctions nécessaires du SDK Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-// Votre configuration Firebase (DOIT être la même que dans index.html)
+// Votre configuration Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyBd7_E3cPprFPVkC6_CCpwt57tDghU4y2E",
-  authDomain: "magestock-for-team.firebaseapp.com",
-  projectId: "magestock-for-team",
-  storageBucket: "magestock-for-team.firebasestorage.app",
-  messagingSenderId: "109154510782",
-  appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
+    apiKey: "AIzaSyBd7_E3cPprFPVkC6_CCpwt57tDghU4y2E",
+    authDomain: "magestock-for-team.firebaseapp.com",
+    projectId: "magestock-for-team",
+    storageBucket: "magestock-for-team.firebasestorage.app",
+    messagingSenderId: "109154510782",
+    appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
 };
 
-// Initialisation de Firebase et Firestore dans ce module (script.js)
+// Initialisation de Firebase et Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Référence à la collection 'products'
+const productsCollectionRef = collection(db, 'products');
 
 document.addEventListener('DOMContentLoaded', () => {
     const productForm = document.getElementById('productForm');
     const designationInput = document.getElementById('designation');
     const quantityInput = document.getElementById('quantity');
     const productList = document.getElementById('productList');
-
-    // Référence à la collection 'products' dans Firestore
-    const productsCollectionRef = collection(db, 'products');
+    const totalStockSpan = document.getElementById('total-stock');
 
     // Fonction pour ajouter un nouveau produit ou mettre à jour une quantité existante
     const addOrUpdateProduct = async (designation, quantity) => {
@@ -59,9 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Fonction pour afficher les produits à l'écran
-    const renderProducts = (productsData) => {
+    // Fonction pour afficher les produits et la quantité totale à l'écran
+    const renderProductsAndTotals = (productsData) => {
         productList.innerHTML = '';
+        let totalQuantiteActuelle = 0;
+
         productsData.forEach(product => {
             const listItem = document.createElement('li');
             listItem.className = 'product-item';
@@ -79,7 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="delete-button" data-id="${product.id}">&#x2715;</button>
             `;
             productList.appendChild(listItem);
+            totalQuantiteActuelle += product.quantity;
         });
+
+        // Mise à jour de l'affichage du total du stock
+        totalStockSpan.textContent = totalQuantiteActuelle;
     };
 
     // Écouteur d'événements pour le formulaire d'ajout/mise à jour de produit
@@ -104,11 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const productId = target.dataset.id;
 
         if (productId) {
+            const currentQuantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
+
             if (target.classList.contains('increase-qty')) {
-                const currentQuantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
                 await updateProductQuantity(productId, currentQuantity + 1);
             } else if (target.classList.contains('decrease-qty')) {
-                const currentQuantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
                 if (currentQuantity > 0) {
                     await updateProductQuantity(productId, currentQuantity - 1);
                 }
@@ -127,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         snapshot.forEach(doc => {
             productsData.push({ id: doc.id, ...doc.data() });
         });
-        renderProducts(productsData);
+        renderProductsAndTotals(productsData);
     }, (error) => {
         console.error("Erreur lors de la récupération des données Firestore : ", error);
         alert("Impossible de charger les données du stock. Veuillez vérifier votre connexion.");
