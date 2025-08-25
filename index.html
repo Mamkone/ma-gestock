@@ -19,7 +19,7 @@
             <input type="text" id="designation" placeholder="Désignation du produit" required>
             <input type="text" id="category" placeholder="Catégorie du produit" required>
             <input type="number" id="quantity" placeholder="Quantité" min="0" value="1" required>
-            <button type="submit">Ajouter/Modifier Produit</button>
+            <button type="submit">Ajouter Produit</button>
         </form>
 
         <div class="product-list-container">
@@ -56,7 +56,10 @@
                 </ul>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/iife.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
     <script type="module" src="script.js"></script>
 </body>
 </html>

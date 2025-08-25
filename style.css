@@ -102,7 +102,12 @@ h2 {
     padding: 0;
 }
 
-.product-list li, #monthlyOutflowList li {
+.category-list li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #ccc;
+}
+
+.product-list li {
     background-color: #f0f0f0;
     margin-bottom: 10px;
     padding: 15px;
@@ -130,12 +135,28 @@ h2 {
     background-color: #34495e;
 }
 
-.product-list .sell-btn {
+.product-list .add-btn {
     background-color: #27ae60;
 }
 
-.product-list .sell-btn:hover {
+.product-list .remove-btn {
+    background-color: #e74c3c;
+}
+
+.product-list .delete-btn {
+    background-color: #95a5a6;
+}
+
+.product-list .add-btn:hover {
     background-color: #219d53;
+}
+
+.product-list .remove-btn:hover {
+    background-color: #c0392b;
+}
+
+.product-list .delete-btn:hover {
+    background-color: #7f8c8d;
 }
 
 .filter-container {
