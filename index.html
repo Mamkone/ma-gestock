@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Stock Simple</title>
+    <title>Gestionnaire de Stock</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,20 +12,51 @@
 
         <div class="summary-container">
             <p class="summary-item">Quantité totale actuelle des produits : <span id="total-stock">0</span></p>
+            <p class="summary-item">Total des sorties (mois en cours) : <span id="monthly-outflow">0</span></p>
         </div>
 
         <form id="productForm" class="product-form">
             <input type="text" id="designation" placeholder="Désignation du produit" required>
+            <input type="text" id="category" placeholder="Catégorie du produit" required>
             <input type="number" id="quantity" placeholder="Quantité" min="0" value="1" required>
-            <button type="submit">Ajouter Produit</button>
+            <button type="submit">Ajouter/Modifier Produit</button>
         </form>
 
         <div class="product-list-container">
+            <h2>Stock par Catégorie</h2>
+            <ul id="categoryList" class="category-list">
+                </ul>
+
+            <h2>Sorties de stock par mois</h2>
+            <div class="filter-container">
+                <label for="outflowMonthFilter">Sélectionner le mois :</label>
+                <select id="outflowMonthFilter">
+                    <option value="all">Tous les mois</option>
+                    <option value="1">Janvier</option>
+                    <option value="2">Février</option>
+                    <option value="3">Mars</option>
+                    <option value="4">Avril</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juin</option>
+                    <option value="7">Juillet</option>
+                    <option value="8">Août</option>
+                    <option value="9">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+            </div>
+            <ul id="monthlyOutflowList">
+                 </ul>
+            
+            <hr>
+
+            <h2>Détails du Stock</h2>
             <ul id="productList" class="product-list">
-            </ul>
+                </ul>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/iife.js"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>

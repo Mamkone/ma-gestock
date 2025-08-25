@@ -1,232 +1,181 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
     margin: 0;
     padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Aligne en haut */
-    min-height: 100vh;
-    box-sizing: border-box;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
 }
 
 .container {
+    max-width: 800px;
+    margin: 30px auto;
     background-color: #ffffff;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 500px;
-    box-sizing: border-box;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
 }
 
 h1 {
+    color: #2c3e50;
     text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-    font-size: 1.8em;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
 }
 
-/* NOUVEAUX STYLES POUR LES TOTAUX SIMPLIFIÉS */
+h2 {
+    font-size: 1.5em;
+    color: #34495e;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
 .summary-container {
-    background-color: #e9ecef;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #ecf0f1;
     border-radius: 8px;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-    text-align: center;
 }
 
 .summary-item {
     font-size: 1.1em;
-    font-weight: 600;
-    color: #495057;
-    margin: 0;
+    font-weight: bold;
+    color: #555;
+    text-align: center;
 }
 
-.summary-item span {
-    font-weight: bold;
-    color: #007bff; /* Couleur bleue pour le chiffre */
+.result-value {
+    color: #27ae60;
+    font-size: 1.2em;
+    margin-left: 5px;
 }
 
 .product-form {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 30px;
-}
-
-.product-form input[type="text"],
-.product-form input[type="number"] {
-    padding: 12px 15px;
     border: 1px solid #ddd;
+    padding: 20px;
     border-radius: 8px;
-    font-size: 1em;
-    outline: none;
-    transition: border-color 0.3s ease;
+    background-color: #f9f9f9;
 }
 
-.product-form input[type="text"]:focus,
-.product-form input[type="number"]:focus {
-    border-color: #007bff;
+.product-form input, .product-form select {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
 }
 
 .product-form button {
-    background-color: #007bff;
+    flex: 1;
+    min-width: 150px;
+    padding: 10px;
+    background-color: #3498db;
     color: white;
-    padding: 12px 20px;
     border: none;
-    border-radius: 8px;
-    font-size: 1.1em;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.3s;
 }
 
 .product-form button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
+    background-color: #2980b9;
 }
 
 .product-list-container {
-    max-height: 400px; /* Limite la hauteur pour le défilement */
-    overflow-y: auto; /* Active le défilement si le contenu dépasse */
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 10px;
+    margin-top: 30px;
 }
 
-.product-list {
-    list-style: none;
+.category-list, .product-list, #monthlyOutflowList {
+    list-style-type: none;
     padding: 0;
-    margin: 0;
 }
 
-.product-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 10px;
-    border-bottom: 1px solid #eee;
-    background-color: #fff;
-    margin-bottom: 8px;
+.product-list li, #monthlyOutflowList li {
+    background-color: #f0f0f0;
+    margin-bottom: 10px;
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.product-item:last-child {
-    border-bottom: none;
-}
-
-.product-info {
+.product-list li span {
     flex-grow: 1;
 }
 
-.product-info strong {
-    font-size: 1.1em;
-    color: #333;
-    display: block;
-    margin-bottom: 5px;
-}
-
-.product-info span {
-    color: #555;
-    font-size: 0.95em;
-}
-
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.quantity-controls button {
-    background-color: #6c757d;
+.product-list button {
+    background-color: #2c3e50;
     color: white;
     border: none;
-    border-radius: 5px;
-    width: 30px;
-    height: 30px;
-    font-size: 1.1em;
+    padding: 6px 12px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    margin-left: 5px;
+}
+
+.product-list button:hover {
+    background-color: #34495e;
+}
+
+.product-list .sell-btn {
+    background-color: #27ae60;
+}
+
+.product-list .sell-btn:hover {
+    background-color: #219d53;
+}
+
+.filter-container {
     display: flex;
-    justify-content: center;
     align-items: center;
-    flex-shrink: 0;
+    margin-bottom: 20px;
 }
 
-.quantity-controls button:hover {
-    background-color: #5a6268;
-}
-
-.quantity-controls span {
+.filter-container label {
     font-weight: bold;
-    font-size: 1.1em;
-    color: #007bff;
-    min-width: 30px;
-    text-align: center;
+    margin-right: 10px;
+    color: #555;
 }
 
-.delete-button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    width: 35px;
-    height: 35px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-left: 10px;
-    flex-shrink: 0;
+.filter-container select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
 
-.delete-button:hover {
-    background-color: #c82333;
-}
-
-/* Media Queries pour la responsivité */
+/* Responsive design */
 @media (max-width: 600px) {
-    body {
-        padding: 10px;
-    }
-
     .container {
-        padding: 15px;
+        padding: 20px;
+        margin: 15px;
     }
-
-    h1 {
-        font-size: 1.6em;
-        margin-bottom: 20px;
-    }
-
     .summary-container {
-        padding: 10px 15px;
+        flex-direction: column;
+        gap: 10px;
     }
-
-    .product-form input,
-    .product-form button {
-        font-size: 0.95em;
-        padding: 10px 12px;
+    .product-form {
+        flex-direction: column;
     }
-
-    .product-item {
-        flex-wrap: wrap;
-        padding: 12px 8px;
-    }
-
-    .product-info {
+    .product-form input, .product-form select, .product-form button {
+        min-width: unset;
         width: 100%;
-        margin-bottom: 10px;
     }
-
-    .quantity-controls, .delete-button {
-        margin-top: 5px;
-    }
-
-    .delete-button {
-        margin-left: 0;
-        width: 30px;
-        height: 30px;
+    .product-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }

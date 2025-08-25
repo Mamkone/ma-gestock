@@ -1,141 +1,178 @@
-// **** NOUVEAU CONTENU COMPLET ET CORRECT DE SCRIPT.JS ****
+import {
+    get,
+    set
+} from 'https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm';
 
-// Import des fonctions nécessaires du SDK Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+// Éléments du DOM
+const productForm = document.getElementById('productForm');
+const designationInput = document.getElementById('designation');
+const categoryInput = document.getElementById('category');
+const quantityInput = document.getElementById('quantity');
+const totalStockSpan = document.getElementById('total-stock');
+const monthlyOutflowSpan = document.getElementById('monthly-outflow');
+const outflowMonthFilter = document.getElementById('outflowMonthFilter');
+const categoryList = document.getElementById('categoryList');
+const monthlyOutflowList = document.getElementById('monthlyOutflowList');
+const productList = document.getElementById('productList');
 
-// Votre configuration Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyBd7_E3cPprFPVkC6_CCpwt57tDghU4y2E",
-    authDomain: "magestock-for-team.firebaseapp.com",
-    projectId: "magestock-for-team",
-    storageBucket: "magestock-for-team.firebasestorage.app",
-    messagingSenderId: "109154510782",
-    appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
+// Données
+let products = [];
+let sales = [];
+
+// Clés de stockage
+const STOCK_KEY = 'stockManagerProducts';
+const SALES_KEY = 'stockManagerSales';
+
+// Fonction pour sauvegarder les données
+const saveProducts = async () => {
+    await set(STOCK_KEY, products);
 };
 
-// Initialisation de Firebase et Firestore
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const saveSales = async () => {
+    await set(SALES_KEY, sales);
+};
 
-// Référence à la collection 'products'
-const productsCollectionRef = collection(db, 'products');
+// Fonction pour charger les données
+const loadData = async () => {
+    products = await get(STOCK_KEY) || [];
+    sales = await get(SALES_KEY) || [];
+    renderAll();
+};
 
-document.addEventListener('DOMContentLoaded', () => {
-    const productForm = document.getElementById('productForm');
-    const designationInput = document.getElementById('designation');
-    const quantityInput = document.getElementById('quantity');
-    const productList = document.getElementById('productList');
-    const totalStockSpan = document.getElementById('total-stock');
+// Fonctions de rendu
+const renderAll = () => {
+    renderStockSummary();
+    renderCategories();
+    renderMonthlyOutflow();
+    renderProductList();
+};
 
-    // Fonction pour ajouter un nouveau produit ou mettre à jour une quantité existante
-    const addOrUpdateProduct = async (designation, quantity) => {
-        const q = query(productsCollectionRef, where('designation', '==', designation));
-        const querySnapshot = await getDocs(q);
+const renderStockSummary = () => {
+    const totalStock = products.reduce((sum, product) => sum + product.quantity, 0);
+    totalStockSpan.textContent = totalStock;
+};
 
-        if (!querySnapshot.empty) {
-            const documentRef = querySnapshot.docs[0];
-            const currentQuantity = documentRef.data().quantity;
-            await updateDoc(doc(db, 'products', documentRef.id), {
-                quantity: currentQuantity + quantity
-            });
-        } else {
-            await addDoc(productsCollectionRef, {
-                designation: designation,
-                quantity: quantity
-            });
-        }
-    };
+const renderCategories = () => {
+    categoryList.innerHTML = '';
+    const categories = products.reduce((acc, product) => {
+        acc[product.category] = (acc[product.category] || 0) + product.quantity;
+        return acc;
+    }, {});
 
-    // Fonction pour supprimer un produit de la base de données
-    const deleteProduct = async (productId) => {
-        await deleteDoc(doc(db, 'products', productId));
-    };
+    for (const category in categories) {
+        const li = document.createElement('li');
+        li.textContent = `${category}: ${categories[category]}`;
+        categoryList.appendChild(li);
+    }
+};
 
-    // Fonction pour mettre à jour la quantité d'un produit existant
-    const updateProductQuantity = async (productId, newQuantity) => {
-        await updateDoc(doc(db, 'products', productId), {
-            quantity: newQuantity
-        });
-    };
+const renderMonthlyOutflow = () => {
+    const selectedMonth = outflowMonthFilter.value === 'all' ? null : parseInt(outflowMonthFilter.value, 10);
+    const currentYear = new Date().getFullYear();
+    let totalOutflow = 0;
 
-    // Fonction pour afficher les produits et la quantité totale à l'écran
-    const renderProductsAndTotals = (productsData) => {
-        productList.innerHTML = '';
-        let totalQuantiteActuelle = 0;
+    monthlyOutflowList.innerHTML = '';
+    const outflowByCategory = {};
 
-        productsData.forEach(product => {
-            const listItem = document.createElement('li');
-            listItem.className = 'product-item';
-            listItem.dataset.id = product.id;
+    sales.forEach(sale => {
+        const saleDate = new Date(sale.date);
+        const saleMonth = saleDate.getMonth() + 1;
+        const saleYear = saleDate.getFullYear();
 
-            listItem.innerHTML = `
-                <div class="product-info">
-                    <strong>${product.designation}</strong>
-                    <span>Quantité: <span id="qty-${product.id}">${product.quantity}</span></span>
-                </div>
-                <div class="quantity-controls">
-                    <button class="decrease-qty" data-id="${product.id}">-</button>
-                    <button class="increase-qty" data-id="${product.id}">+</button>
-                </div>
-                <button class="delete-button" data-id="${product.id}">&#x2715;</button>
-            `;
-            productList.appendChild(listItem);
-            totalQuantiteActuelle += product.quantity;
-        });
-
-        // Mise à jour de l'affichage du total du stock
-        totalStockSpan.textContent = totalQuantiteActuelle;
-    };
-
-    // Écouteur d'événements pour le formulaire d'ajout/mise à jour de produit
-    productForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const designation = designationInput.value.trim();
-        const quantity = parseInt(quantityInput.value);
-
-        if (designation && !isNaN(quantity) && quantity >= 0) {
-            await addOrUpdateProduct(designation, quantity);
-            designationInput.value = '';
-            quantityInput.value = '1';
-        } else {
-            alert('Veuillez entrer une désignation et une quantité valide.');
+        if (saleYear === currentYear && (selectedMonth === null || saleMonth === selectedMonth)) {
+            totalOutflow += sale.quantity;
+            outflowByCategory[sale.category] = (outflowByCategory[sale.category] || 0) + sale.quantity;
         }
     });
 
-    // Écouteur d'événements pour les boutons de modification/suppression
-    productList.addEventListener('click', async (e) => {
-        const target = e.target;
-        const productId = target.dataset.id;
+    monthlyOutflowSpan.textContent = totalOutflow;
 
-        if (productId) {
-            const currentQuantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
+    for (const category in outflowByCategory) {
+        const li = document.createElement('li');
+        li.textContent = `${category}: ${outflowByCategory[category]} unités sorties`;
+        monthlyOutflowList.appendChild(li);
+    }
+};
 
-            if (target.classList.contains('increase-qty')) {
-                await updateProductQuantity(productId, currentQuantity + 1);
-            } else if (target.classList.contains('decrease-qty')) {
-                if (currentQuantity > 0) {
-                    await updateProductQuantity(productId, currentQuantity - 1);
-                }
-            } else if (target.classList.contains('delete-button')) {
-                const designation = target.closest('.product-item').querySelector('strong').textContent;
-                if (confirm(`Êtes-vous sûr de vouloir supprimer "${designation}" ?`)) {
-                    await deleteProduct(productId);
-                }
-            }
-        }
+const renderProductList = () => {
+    productList.innerHTML = '';
+    products.forEach((product, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${product.designation} (${product.category}): ${product.quantity}</span>
+            <button class="remove-btn" data-index="${index}">-</button>
+            <button class="add-btn" data-index="${index}">+</button>
+            <button class="sell-btn" data-index="${index}">Vendre</button>
+        `;
+        productList.appendChild(li);
     });
+};
 
-    // Écoute les changements en temps réel dans la collection 'products'
-    onSnapshot(query(productsCollectionRef, orderBy('designation')), (snapshot) => {
-        const productsData = [];
-        snapshot.forEach(doc => {
-            productsData.push({ id: doc.id, ...doc.data() });
+// Gestion des événements
+productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const designation = designationInput.value.trim();
+    const category = categoryInput.value.trim();
+    const quantity = parseInt(quantityInput.value, 10);
+
+    const existingProduct = products.find(p => p.designation === designation);
+
+    if (existingProduct) {
+        existingProduct.quantity += quantity;
+        existingProduct.category = category; // Met à jour la catégorie si elle a changé
+    } else {
+        products.push({
+            designation,
+            category,
+            quantity
         });
-        renderProductsAndTotals(productsData);
-    }, (error) => {
-        console.error("Erreur lors de la récupération des données Firestore : ", error);
-        alert("Impossible de charger les données du stock. Veuillez vérifier votre connexion.");
-    });
+    }
+
+    await saveProducts();
+    renderAll();
+    productForm.reset();
 });
+
+productList.addEventListener('click', async (e) => {
+    const index = e.target.dataset.index;
+    if (e.target.classList.contains('remove-btn') && products[index].quantity > 0) {
+        products[index].quantity -= 1;
+        if (products[index].quantity === 0) {
+            products.splice(index, 1);
+        }
+        await saveProducts();
+        renderAll();
+    } else if (e.target.classList.contains('add-btn')) {
+        products[index].quantity += 1;
+        await saveProducts();
+        renderAll();
+    } else if (e.target.classList.contains('sell-btn')) {
+        const product = products[index];
+        const quantityToSell = parseInt(prompt(`Combien d'unités de "${product.designation}" voulez-vous vendre ?`, '1'), 10);
+
+        if (!isNaN(quantityToSell) && quantityToSell > 0 && quantityToSell <= product.quantity) {
+            product.quantity -= quantityToSell;
+            sales.push({
+                designation: product.designation,
+                category: product.category,
+                quantity: quantityToSell,
+                date: new Date().toISOString()
+            });
+
+            if (product.quantity === 0) {
+                products.splice(index, 1);
+            }
+
+            await saveProducts();
+            await saveSales();
+            renderAll();
+        } else if (quantityToSell > product.quantity) {
+            alert("Quantité insuffisante en stock.");
+        }
+    }
+});
+
+outflowMonthFilter.addEventListener('change', renderMonthlyOutflow);
+
+// Chargement initial
+loadData();
