@@ -34,7 +34,7 @@ const renderAll = async () => {
 
     renderStockSummary(products);
     renderCategories(products);
-    renderMonthlyOutflow(sales, products);
+    renderMonthlyOutflow(sales);
     renderProductList(products);
 };
 
@@ -57,7 +57,7 @@ const renderCategories = (products) => {
     }
 };
 
-const renderMonthlyOutflow = (sales, products) => {
+const renderMonthlyOutflow = (sales) => {
     const selectedMonth = outflowMonthFilter.value === 'all' ? null : parseInt(outflowMonthFilter.value, 10);
     const currentYear = new Date().getFullYear();
     let totalOutflow = 0;
@@ -136,7 +136,6 @@ productList.addEventListener('click', async (e) => {
         const quantityToAdd = parseInt(prompt(`Combien d'unités de "${product.designation}" voulez-vous ajouter ?`, '1'), 10);
         if (!isNaN(quantityToAdd) && quantityToAdd > 0) {
             await productRef.update({ quantity: product.quantity + quantityToAdd });
-            renderAll();
         }
     } else if (e.target.classList.contains('remove-btn') && product.quantity > 0) {
         const quantityToRemove = parseInt(prompt(`Combien d'unités de "${product.designation}" voulez-vous vendre ?`, '1'), 10);
@@ -149,24 +148,21 @@ productList.addEventListener('click', async (e) => {
                 quantity: quantityToRemove,
                 date: new Date().toISOString()
             });
-            renderAll();
         } else if (quantityToRemove > product.quantity) {
             alert("Quantité insuffisante en stock.");
         }
     } else if (e.target.classList.contains('delete-btn')) {
         if (confirm(`Êtes-vous sûr de vouloir supprimer "${product.designation}" du stock ?`)) {
             await productRef.delete();
-            renderAll();
         }
     }
+    renderAll();
 });
 
 outflowMonthFilter.addEventListener('change', async () => {
     const salesSnapshot = await db.collection("sales").get();
     const sales = salesSnapshot.docs.map(doc => doc.data());
-    const productsSnapshot = await db.collection("products").get();
-    const products = productsSnapshot.docs.map(doc => doc.data());
-    renderMonthlyOutflow(sales, products);
+    renderMonthlyOutflow(sales);
 });
 
 // Chargement initial
