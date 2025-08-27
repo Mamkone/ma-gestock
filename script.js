@@ -1,18 +1,18 @@
-// Votre configuration Firebase (inchangée)
+// Votre configuration Firebase
 const firebaseConfig = {
-    apiKey: "VOTRE_CLE_API", // Pensez à masquer cela dans un environnement de production
+    apiKey: "VOTRE_CLE_API",
     authDomain: "magestock-for-team.firebaseapp.com",
     projectId: "magestock-for-team",
-    storageBucket: "magestock-for-team.appspot.com", // Correction de .firebasestorage. en .appspot.
+    storageBucket: "magestock-for-team.appspot.com",
     messagingSenderId: "109154510782",
     appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
 };
 
-// Initialisation de Firebase (inchangée)
+// Initialisation de Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Éléments du DOM (inchangés)
+// Éléments du DOM (produits)
 const productForm = document.getElementById('productForm');
 const designationInput = document.getElementById('designation');
 const categoryInput = document.getElementById('category');
@@ -24,31 +24,37 @@ const categoryList = document.getElementById('categoryList');
 const monthlyOutflowList = document.getElementById('monthlyOutflowList');
 const productList = document.getElementById('productList');
 
-// Variable pour stocker les ventes afin d'éviter de les relire pour le filtre
+// =======================================================
+// AJOUT : Éléments du DOM pour la nouvelle fenêtre modale
+// =======================================================
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalBody = document.getElementById('modal-body');
+const modalCancelBtn = document.getElementById('modal-cancel-btn');
+const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+
+
 let allSales = [];
 
-// Fonctions de rendu (inchangées)
+// Toutes les fonctions "render..." restent identiques
 const renderStockSummary = (products) => {
     const totalStock = products.reduce((sum, product) => sum + product.quantity, 0);
     totalStockSpan.textContent = totalStock;
 };
-
 const renderCategories = (products) => {
     categoryList.innerHTML = '';
     const categories = products.reduce((acc, product) => {
-        acc[product.category] = (acc[product.category] || 0) + product.quantity;
+        const categoryName = product.category || 'Non classé';
+        acc[categoryName] = (acc[categoryName] || 0) + product.quantity;
         return acc;
     }, {});
-
     for (const category in categories) {
         const li = document.createElement('li');
         li.textContent = `${category}: ${categories[category]}`;
         categoryList.appendChild(li);
     }
 };
-
 const renderMonthlyOutflow = (sales) => {
-    // Le reste de la fonction est identique
     const selectedMonth = outflowMonthFilter.value === 'all' ? null : parseInt(outflowMonthFilter.value, 10);
     const currentYear = new Date().getFullYear();
     let totalOutflow = 0;
@@ -60,7 +66,8 @@ const renderMonthlyOutflow = (sales) => {
         const saleYear = saleDate.getFullYear();
         if (saleYear === currentYear && (selectedMonth === null || saleMonth === selectedMonth)) {
             totalOutflow += sale.quantity;
-            outflowByCategory[sale.category] = (outflowByCategory[sale.category] || 0) + sale.quantity;
+            const categoryName = sale.category || 'Non classé';
+            outflowByCategory[categoryName] = (outflowByCategory[categoryName] || 0) + sale.quantity;
         }
     });
     monthlyOutflowSpan.textContent = totalOutflow;
@@ -70,14 +77,12 @@ const renderMonthlyOutflow = (sales) => {
         monthlyOutflowList.appendChild(li);
     }
 };
-
 const renderProductList = (products) => {
-    // Fonction identique
     productList.innerHTML = '';
     products.forEach((product) => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <span>${product.designation} (${product.category}): ${product.quantity}</span>
+            <span>${product.designation} (${product.category || 'Non classé'}): ${product.quantity}</span>
             <div>
                 <button class="add-btn" data-id="${product.id}">+</button>
                 <button class="remove-btn" data-id="${product.id}">-</button>
@@ -87,82 +92,174 @@ const renderProductList = (products) => {
         productList.appendChild(li);
     });
 };
+const renderCategoryDatalist = (products) => {
+    const datalist = document.getElementById('category-options');
+    if (!datalist) return;
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(c => c))];
+    datalist.innerHTML = '';
+    uniqueCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        datalist.appendChild(option);
+    });
+};
 
-// Gestion des événements (simplifiée)
+// Gestion du formulaire d'ajout (inchangé)
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const designation = designationInput.value.trim();
     const category = categoryInput.value.trim();
     const quantity = parseInt(quantityInput.value, 10);
 
+    if (!designation || !category || isNaN(quantity)) {
+        alert("Veuillez remplir tous les champs correctement.");
+        return;
+    }
     const productQuery = await db.collection("products").where("designation", "==", designation).get();
-
     if (!productQuery.empty) {
         const productRef = productQuery.docs[0].ref;
-        const newQuantity = productQuery.docs[0].data().quantity + quantity;
-        await productRef.update({ quantity: newQuantity, category });
+        const oldQuantity = productQuery.docs[0].data().quantity || 0;
+        await productRef.update({
+            quantity: oldQuantity + quantity,
+            category: category
+        });
     } else {
-        await db.collection("products").add({ designation, category, quantity });
+        await db.collection("products").add({
+            designation,
+            category,
+            quantity
+        });
     }
-    // PAS BESOIN de renderAll() ici, onSnapshot s'en occupe !
     productForm.reset();
 });
 
+
+// ========================================================
+// NOUVEAU : Logique complète pour la gestion de la modale
+// ========================================================
+
+// Fonctions pour ouvrir et fermer la modale
+const openModal = () => modal.classList.remove('hidden');
+const closeModal = () => modal.classList.add('hidden');
+
+// Écouteur pour fermer la modale
+modalCancelBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) { // Ferme si on clique sur le fond gris
+        closeModal();
+    }
+});
+
+// Le "cerveau" de la modale : une fonction qui attend la confirmation
+let onConfirmAction = null; // Variable pour stocker l'action à exécuter
+
+modalConfirmBtn.addEventListener('click', () => {
+    if (typeof onConfirmAction === 'function') {
+        onConfirmAction(); // Exécute l'action stockée
+    }
+});
+
+
+// =============================================================
+// ANCIEN `productList.addEventListener` ENTIÈREMENT REMPLACÉ
+// =============================================================
 productList.addEventListener('click', async (e) => {
-    const productId = e.target.dataset.id;
+    const targetButton = e.target;
+    const productId = targetButton.dataset.id;
     if (!productId) return;
 
     const productRef = db.collection("products").doc(productId);
-    const productDoc = await productRef.get(); // On a besoin de .get() ici pour avoir l'état actuel avant modification
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) return;
     const product = productDoc.data();
 
-    if (e.target.classList.contains('add-btn')) {
-        const quantityToAdd = parseInt(prompt(`Combien d'unités de "${product.designation}" voulez-vous ajouter ?`, '1'), 10);
-        if (!isNaN(quantityToAdd) && quantityToAdd > 0) {
-            await productRef.update({ quantity: product.quantity + quantityToAdd });
-        }
-    } else if (e.target.classList.contains('remove-btn') && product.quantity > 0) {
-        const quantityToRemove = parseInt(prompt(`Combien d'unités de "${product.designation}" voulez-vous vendre ?`, '1'), 10);
-        if (!isNaN(quantityToRemove) && quantityToRemove > 0 && quantityToRemove <= product.quantity) {
-            await productRef.update({ quantity: product.quantity - quantityToRemove });
-            await db.collection("sales").add({
-                designation: product.designation,
-                category: product.category,
-                quantity: quantityToRemove,
-                date: new Date().toISOString()
-            });
-        } else if (quantityToRemove > product.quantity) {
-            alert("Quantité insuffisante en stock.");
-        }
-    } else if (e.target.classList.contains('delete-btn')) {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer "${product.designation}" du stock ?`)) {
-            await productRef.delete();
-        }
+    // -- ACTION AJOUTER (+) --
+    if (targetButton.classList.contains('add-btn')) {
+        modalTitle.textContent = `Ajouter à "${product.designation}"`;
+        modalBody.innerHTML = `<p>Stock actuel : ${product.quantity}</p><input type="number" id="modal-quantity" min="1" value="1" placeholder="Quantité à ajouter">`;
+        modalConfirmBtn.textContent = 'Ajouter';
+        modalConfirmBtn.classList.remove('danger');
+        openModal();
+
+        onConfirmAction = async () => {
+            const quantityToAdd = parseInt(document.getElementById('modal-quantity').value, 10);
+            if (!isNaN(quantityToAdd) && quantityToAdd > 0) {
+                await productRef.update({
+                    quantity: (product.quantity || 0) + quantityToAdd
+                });
+                closeModal();
+            } else {
+                alert("Veuillez entrer une quantité valide.");
+            }
+        };
     }
-    // PAS BESOIN de renderAll() ici non plus !
+
+    // -- ACTION RETIRER (-) --
+    else if (targetButton.classList.contains('remove-btn')) {
+        const currentQuantity = product.quantity || 0;
+        if (currentQuantity <= 0) {
+            alert("Stock déjà à zéro.");
+            return;
+        }
+        modalTitle.textContent = `Vendre depuis "${product.designation}"`;
+        modalBody.innerHTML = `<p>Stock actuel : ${currentQuantity}</p><input type="number" id="modal-quantity" min="1" max="${currentQuantity}" value="1" placeholder="Quantité à vendre">`;
+        modalConfirmBtn.textContent = 'Vendre';
+        modalConfirmBtn.classList.remove('danger');
+        openModal();
+
+        onConfirmAction = async () => {
+            const quantityToRemove = parseInt(document.getElementById('modal-quantity').value, 10);
+            if (!isNaN(quantityToRemove) && quantityToRemove > 0 && quantityToRemove <= currentQuantity) {
+                await productRef.update({
+                    quantity: currentQuantity - quantityToRemove
+                });
+                await db.collection("sales").add({
+                    designation: product.designation,
+                    category: product.category || 'Non classé',
+                    quantity: quantityToRemove,
+                    date: new Date().toISOString()
+                });
+                closeModal();
+            } else {
+                alert("Veuillez entrer une quantité valide (inférieure ou égale au stock).");
+            }
+        };
+    }
+    
+    // -- ACTION SUPPRIMER (X) --
+    else if (targetButton.classList.contains('delete-btn')) {
+        modalTitle.textContent = 'Confirmation de suppression';
+        modalBody.innerHTML = `<p>Êtes-vous sûr de vouloir supprimer définitivement le produit "<strong>${product.designation}</strong>" ? Cette action est irréversible.</p>`;
+        modalConfirmBtn.textContent = 'Supprimer';
+        modalConfirmBtn.classList.add('danger'); // Ajoute le style rouge pour le danger
+        openModal();
+
+        onConfirmAction = async () => {
+            await productRef.delete();
+            closeModal();
+        };
+    }
 });
 
+
+// Filtre par mois (inchangé)
 outflowMonthFilter.addEventListener('change', () => {
-    // On ne relit pas la base de données, on filtre juste les données qu'on a déjà
     renderMonthlyOutflow(allSales);
 });
 
-// --- CHANGEMENT MAJEUR : MISE EN PLACE DES ÉCOUTEURS TEMPS RÉEL ---
-
-// 1. Écouteur pour la collection "products"
+// Écouteurs temps réel (inchangés)
 db.collection("products").onSnapshot((snapshot) => {
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    // À chaque mise à jour des produits, on redessine tout ce qui en dépend
+    const products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
     renderStockSummary(products);
     renderCategories(products);
     renderProductList(products);
+    renderCategoryDatalist(products);
 });
 
-// 2. Écouteur pour la collection "sales"
 db.collection("sales").onSnapshot((snapshot) => {
     allSales = snapshot.docs.map(doc => doc.data());
-    
-    // À chaque mise à jour des ventes, on redessine le bloc des sorties
     renderMonthlyOutflow(allSales);
 });

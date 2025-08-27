@@ -17,7 +17,11 @@
 
         <form id="productForm" class="product-form">
             <input type="text" id="designation" placeholder="Désignation du produit" required>
-            <input type="text" id="category" placeholder="Catégorie du produit" required>
+            
+            <input list="category-options" id="category" name="category" placeholder="Choisir ou créer une catégorie..." required>
+            <datalist id="category-options">
+                </datalist>
+            
             <input type="number" id="quantity" placeholder="Quantité" min="0" value="1" required>
             <button type="submit">Ajouter Produit</button>
         </form>
@@ -25,7 +29,7 @@
         <div class="product-list-container">
             <h2>Stock par Catégorie</h2>
             <ul id="categoryList" class="category-list">
-                </ul>
+            </ul>
 
             <h2>Sorties de stock par mois</h2>
             <div class="filter-container">
@@ -47,19 +51,29 @@
                 </select>
             </div>
             <ul id="monthlyOutflowList">
-                 </ul>
+            </ul>
             
             <hr>
 
             <h2>Détails du Stock</h2>
             <ul id="productList" class="product-list">
-                </ul>
+            </ul>
         </div>
     </div>
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">Titre de la modale</h2>
+            <div id="modal-body">
+                </div>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn" class="btn-secondary">Annuler</button>
+                <button id="modal-confirm-btn" class="btn-primary">Confirmer</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
