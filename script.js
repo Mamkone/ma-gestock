@@ -29,14 +29,30 @@ const modalBody = document.getElementById('modal-body');
 const modalCancelBtn = document.getElementById('modal-cancel-btn');
 const modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
-// SUPPRESSION : La case à cocher n'est plus un élément global
-// const isReturnCheckbox = document.getElementById('is-return-checkbox');
-
 let allTransactions = [];
 
-// Toutes les fonctions "render..." et la logique de la modale restent identiques
-const renderStockSummary = (products) => { /* ... (inchangé) ... */ };
-const renderCategories = (products) => { /* ... (inchangé) ... */ };
+// ======================================================================
+// CORRECTION : Le contenu de ces fonctions a été restauré
+// ======================================================================
+const renderStockSummary = (products) => {
+    const totalStock = products.reduce((sum, product) => sum + (product.quantity || 0), 0);
+    totalStockSpan.textContent = totalStock;
+};
+
+const renderCategories = (products) => {
+    categoryList.innerHTML = '';
+    const categories = products.reduce((acc, product) => {
+        const categoryName = product.category || 'Non classé';
+        acc[categoryName] = (acc[categoryName] || 0) + (product.quantity || 0);
+        return acc;
+    }, {});
+    for (const category in categories) {
+        const li = document.createElement('li');
+        li.textContent = `${category}: ${categories[category]}`;
+        categoryList.appendChild(li);
+    }
+};
+
 const renderMonthlyOutflow = (transactions) => {
     const selectedMonth = outflowMonthFilter.value === 'all' ? null : parseInt(outflowMonthFilter.value, 10);
     const currentYear = new Date().getFullYear();
@@ -65,8 +81,35 @@ const renderMonthlyOutflow = (transactions) => {
         monthlyOutflowList.appendChild(li);
     }
 };
-const renderProductList = (products) => { /* ... (inchangé) ... */ };
-const renderCategoryDatalist = (products) => { /* ... (inchangé) ... */ };
+
+const renderProductList = (products) => {
+    productList.innerHTML = '';
+    products.forEach((product) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${product.designation} (${product.category || 'Non classé'}): ${product.quantity || 0}</span>
+            <div>
+                <button class="add-btn" data-id="${product.id}">+</button>
+                <button class="remove-btn" data-id="${product.id}">-</button>
+                <button class="delete-btn" data-id="${product.id}">X</button>
+            </div>
+        `;
+        productList.appendChild(li);
+    });
+};
+
+const renderCategoryDatalist = (products) => {
+    const datalist = document.getElementById('category-options');
+    if (!datalist) return;
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(c => c))];
+    datalist.innerHTML = '';
+    uniqueCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        datalist.appendChild(option);
+    });
+};
+
 const openModal = () => modal.classList.remove('hidden');
 const closeModal = () => modal.classList.add('hidden');
 modalCancelBtn.addEventListener('click', closeModal);
@@ -74,20 +117,15 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 let onConfirmAction = null;
 modalConfirmBtn.addEventListener('click', () => { if (typeof onConfirmAction === 'function') onConfirmAction(); });
 
-
-// =========================================================================
-// CORRECTION : Le formulaire d'ajout n'a plus la logique de retour
-// =========================================================================
+// Le reste du code est correct et reste inchangé...
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const designation = designationInput.value.trim();
     const category = categoryInput.value.trim();
     const quantity = parseInt(quantityInput.value, 10);
-
     if (!designation || !category || isNaN(quantity)) {
         return alert("Veuillez remplir tous les champs correctement.");
     }
-
     const productQuery = await db.collection("products").where("designation", "==", designation).get();
     if (!productQuery.empty) {
         const productRef = productQuery.docs[0].ref;
@@ -99,29 +137,19 @@ productForm.addEventListener('submit', async (e) => {
     } else {
         await db.collection("products").add({ designation, category, quantity });
     }
-    
-    // La logique "if (isReturn)" a été supprimée ici.
     productForm.reset();
 });
 
-
-// =========================================================================
-// CORRECTION MAJEURE : La logique de retour est déplacée dans l'action AJOUTER (+)
-// =========================================================================
 productList.addEventListener('click', async (e) => {
     const targetButton = e.target;
     const productId = targetButton.dataset.id;
     if (!productId) return;
-
     const productRef = db.collection("products").doc(productId);
     const productDoc = await productRef.get();
     if (!productDoc.exists) return;
     const product = productDoc.data();
-
-    // -- ACTION AJOUTER (+) --
     if (targetButton.classList.contains('add-btn')) {
         modalTitle.textContent = `Ajouter à "${product.designation}"`;
-        // On ajoute la case à cocher DANS la modale
         modalBody.innerHTML = `
             <p>Stock actuel : ${product.quantity || 0}</p>
             <input type="number" id="modal-quantity" min="1" value="1" placeholder="Quantité à ajouter">
@@ -133,18 +161,13 @@ productList.addEventListener('click', async (e) => {
         modalConfirmBtn.textContent = 'Confirmer';
         modalConfirmBtn.classList.remove('danger');
         openModal();
-
         onConfirmAction = async () => {
             const quantityToAdd = parseInt(document.getElementById('modal-quantity').value, 10);
-            const isReturn = document.getElementById('modal-is-return').checked; // On vérifie la case DANS la modale
-
+            const isReturn = document.getElementById('modal-is-return').checked;
             if (!isNaN(quantityToAdd) && quantityToAdd > 0) {
-                // 1. On met à jour le stock dans tous les cas
                 await productRef.update({
                     quantity: (product.quantity || 0) + quantityToAdd
                 });
-
-                // 2. Si c'est un retour, on crée la transaction correspondante
                 if (isReturn) {
                     await db.collection("transactions").add({
                         designation: product.designation,
@@ -159,19 +182,14 @@ productList.addEventListener('click', async (e) => {
                 alert("Veuillez entrer une quantité valide.");
             }
         };
-    }
-
-    // -- ACTION RETIRER (-) -- (logique inchangée, mais vérifiée)
-    else if (targetButton.classList.contains('remove-btn')) {
+    } else if (targetButton.classList.contains('remove-btn')) {
         const currentQuantity = product.quantity || 0;
         if (currentQuantity <= 0) return alert("Stock déjà à zéro.");
-        
         modalTitle.textContent = `Vendre depuis "${product.designation}"`;
         modalBody.innerHTML = `<p>Stock actuel : ${currentQuantity}</p><input type="number" id="modal-quantity" min="1" max="${currentQuantity}" value="1" placeholder="Quantité à vendre">`;
         modalConfirmBtn.textContent = 'Vendre';
         modalConfirmBtn.classList.remove('danger');
         openModal();
-
         onConfirmAction = async () => {
             const quantityToRemove = parseInt(document.getElementById('modal-quantity').value, 10);
             if (!isNaN(quantityToRemove) && quantityToRemove > 0 && quantityToRemove <= currentQuantity) {
@@ -183,17 +201,14 @@ productList.addEventListener('click', async (e) => {
                     category: product.category || 'Non classé',
                     quantity: quantityToRemove,
                     date: new Date().toISOString(),
-                    type: 'sale' // C'est bien une vente
+                    type: 'sale'
                 });
                 closeModal();
             } else {
                 alert("Veuillez entrer une quantité valide (inférieure ou égale au stock).");
             }
         };
-    }
-    
-    // -- ACTION SUPPRIMER (X) -- (inchangée)
-    else if (targetButton.classList.contains('delete-btn')) {
+    } else if (targetButton.classList.contains('delete-btn')) {
         modalTitle.textContent = 'Confirmation de suppression';
         modalBody.innerHTML = `<p>Êtes-vous sûr de vouloir supprimer définitivement le produit "<strong>${product.designation}</strong>" ? Cette action est irréversible.</p>`;
         modalConfirmBtn.textContent = 'Supprimer';
@@ -206,8 +221,6 @@ productList.addEventListener('click', async (e) => {
     }
 });
 
-
-// Filtre par mois et Écouteurs temps réel (inchangés)
 outflowMonthFilter.addEventListener('change', () => {
     renderMonthlyOutflow(allTransactions);
 });
