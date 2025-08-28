@@ -58,6 +58,7 @@ h2 {
 .product-form {
     display: flex;
     flex-wrap: wrap;
+    align-items: center; /* Aligne verticalement les éléments */
     gap: 10px;
     margin-bottom: 30px;
     border: 1px solid #ddd;
@@ -91,6 +92,30 @@ h2 {
 
 .product-form button:hover {
     background-color: #2980b9;
+}
+
+/* ============================================= */
+/* NOUVEAU : Style pour la case à cocher "Retour" */
+/* ============================================= */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 100%; /* Prend toute la largeur de la ligne */
+    order: 1; /* Place cet élément avant le bouton */
+    margin-top: 10px;
+}
+
+.form-check input[type="checkbox"] {
+    flex: 0; /* Empêche l'input de s'étirer */
+    min-width: auto;
+    width: auto;
+    height: auto;
+}
+
+.form-check label {
+    font-size: 0.9em;
+    color: #555;
 }
 
 .product-list-container {
@@ -194,6 +219,11 @@ h2 {
         min-width: unset;
         width: 100%;
     }
+    /* S'assure que la case à cocher reste bien alignée */
+    .form-check {
+        width: 100%;
+        justify-content: flex-start;
+    }
     .product-list li {
         flex-direction: column;
         align-items: flex-start;
@@ -201,7 +231,7 @@ h2 {
     }
 }
 /* ======================== */
-/* STYLES DE LA MODALE (AJOUT) */
+/* STYLES DE LA MODALE      */
 /* ======================== */
 
 /* Le fond semi-transparent */
