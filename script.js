@@ -3,7 +3,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyBd7_E3cPprFPVkC6_CCpwt57tDghU4y2E",
     authDomain: "magestock-for-team.firebaseapp.com",
     projectId: "magestock-for-team",
-    storageBucket: "magestock-for-team.appspot.com",
+    storageBucket: "magestock-for-team.firebasestorage.app",
     messagingSenderId: "109154510782",
     appId: "1:109154510782:web:fdddbf05dfab8c6d78fbef"
 };
