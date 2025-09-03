@@ -227,10 +227,12 @@ outflowMonthFilter.addEventListener('change', () => {
 
 db.collection("products").onSnapshot((snapshot) => {
     const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    products.sort((a, b) => (a.designation || '').localeCompare(b.designation || ''));
+
     renderStockSummary(products);
     renderCategories(products);
     renderProductList(products);
-    renderCategoryDatalist(products);
+    renderCategoryDatalist(products);    
 });
 
 db.collection("transactions").onSnapshot((snapshot) => {
